@@ -1,0 +1,617 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  #player {
+    width:100%; aspect-ratio:16/9;
+    background:#0a0a0a;
+    position:relative; overflow:hidden;
+    font-family:'IBM Plex Sans',sans-serif;
+    cursor:pointer;
+    border-radius:8px;
+  }
+
+  canvas#bg-canvas {
+    position:absolute; inset:0; width:100%; height:100%;
+    pointer-events:none; z-index:0;
+  }
+
+  .scene {
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    opacity:0; transition:opacity 0.7s ease;
+    padding:4% 6%; z-index:2;
+  }
+  .scene.active { opacity:1; }
+
+  .label {
+    font-size:9px; letter-spacing:4px; text-transform:uppercase;
+    color:#ff6b35; margin-bottom:10px;
+    opacity:0; transform:translateY(8px);
+    transition:all 0.5s ease 0.3s;
+  }
+  .scene.active .label { opacity:1; transform:translateY(0); }
+
+  .title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(26px,5.5vw,50px);
+    color:#f5f0e8; text-align:center; line-height:1.05;
+    opacity:0; transform:translateY(18px);
+    transition:all 0.6s ease 0.5s; max-width:90%;
+  }
+  .scene.active .title { opacity:1; transform:translateY(0); }
+
+  .quote {
+    font-size:clamp(11px,1.8vw,14px); color:#888;
+    text-align:center; max-width:70%; line-height:1.8;
+    margin-top:14px; font-weight:300; font-style:italic;
+    opacity:0; transform:translateY(8px);
+    transition:all 0.5s ease 0.9s;
+  }
+  .scene.active .quote { opacity:1; transform:translateY(0); }
+
+  /* ── S1 Hook ── */
+  #s1 { background:#060606; }
+  .hook-grid {
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(255,107,53,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,107,53,0.04) 1px, transparent 1px);
+    background-size:40px 40px;
+  }
+  .hook-q {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(13px,2.8vw,22px); color:#ff6b35;
+    text-align:center; margin-top:12px;
+    max-width:75%; line-height:1.4;
+    opacity:0; transition:opacity 0.6s ease 1.1s;
+    border-left:2px solid #ff6b35; padding-left:14px;
+    text-align:left;
+  }
+  #s1.active .hook-q { opacity:1; }
+  .hook-icons {
+    display:flex; gap:12px; margin-top:16px;
+    opacity:0; transition:opacity 0.5s ease 1.4s;
+  }
+  #s1.active .hook-icons { opacity:1; }
+  .hicon {
+    width:44px; height:44px; border:1px solid rgba(255,107,53,0.3);
+    border-radius:6px; display:flex; align-items:center; justify-content:center;
+    font-size:20px; background:rgba(255,107,53,0.06);
+  }
+
+  /* ── S2 Revolución Industrial ── */
+  #s2 { background:#0d0c08; }
+  .factory-row {
+    display:flex; gap:20px; margin-top:18px;
+    opacity:0; transition:opacity 0.6s ease 0.9s;
+    align-items:flex-end;
+  }
+  #s2.active .factory-row { opacity:1; }
+  .factory-bld {
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+  }
+  .factory-rect {
+    background:rgba(255,200,50,0.08);
+    border:1px solid rgba(255,200,50,0.25);
+    border-radius:3px;
+  }
+  .smoke {
+    width:6px; height:6px; border-radius:50%;
+    background:rgba(255,200,50,0.3);
+    animation:rise 2s infinite ease-in-out;
+  }
+  .smoke:nth-child(2){ animation-delay:0.4s; }
+  .smoke:nth-child(3){ animation-delay:0.8s; }
+  @keyframes rise {
+    0%{ transform:translateY(0); opacity:0.5; }
+    100%{ transform:translateY(-14px); opacity:0; }
+  }
+  .factory-label { font-size:9px; letter-spacing:2px; color:#666; text-transform:uppercase; }
+
+  /* ── S3 Cambio actual ── */
+  #s3 { background:#080a10; }
+  .brain-grid {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+    margin-top:16px; width:min(320px,80%);
+    opacity:0; transition:opacity 0.5s ease 0.9s;
+  }
+  #s3.active .brain-grid { opacity:1; }
+  .brain-cell {
+    background:rgba(100,160,255,0.06);
+    border:1px solid rgba(100,160,255,0.18);
+    border-radius:6px; padding:8px 6px;
+    text-align:center;
+    transition:background 0.3s;
+  }
+  .brain-cell:hover { background:rgba(100,160,255,0.12); }
+  .bc-icon { font-size:16px; display:block; margin-bottom:4px; }
+  .bc-label { font-size:9px; letter-spacing:1.5px; color:#7ab0ff; text-transform:uppercase; }
+  .ai-bar {
+    width:min(320px,80%); height:3px;
+    background:rgba(255,255,255,0.05);
+    border-radius:2px; margin-top:14px;
+    overflow:hidden;
+    opacity:0; transition:opacity 0.4s ease 1.3s;
+  }
+  #s3.active .ai-bar { opacity:1; }
+  .ai-fill {
+    height:100%; width:0; background:#7ab0ff;
+    border-radius:2px;
+    transition:width 1.2s ease 1.5s;
+  }
+  #s3.active .ai-fill { width:78%; }
+
+  /* ── S4 300M ── */
+  #s4 { background:#0a0a0a; justify-content:center; }
+  .ring-wrap {
+    position:relative; width:min(180px,45vw); height:min(180px,45vw);
+    margin:12px auto;
+    opacity:0; transform:scale(0.6);
+    transition:all 0.8s cubic-bezier(.34,1.56,.64,1) 0.3s;
+  }
+  #s4.active .ring-wrap { opacity:1; transform:scale(1); }
+  .ring-svg { width:100%; height:100%; }
+  .ring-center {
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+  }
+  .big-number {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(36px,8vw,60px); color:#f5f0e8; line-height:1;
+  }
+  .big-sub { font-size:9px; letter-spacing:2px; color:#555; text-transform:uppercase; margin-top:2px; }
+  .mckinsey-tag {
+    font-size:9px; letter-spacing:3px; color:#444; text-transform:uppercase;
+    margin-top:10px;
+    opacity:0; transition:opacity 0.4s ease 1.2s;
+  }
+  #s4.active .mckinsey-tag { opacity:1; }
+
+  /* ── S5 Timeline ── */
+  #s5 { background:#080a0a; }
+  .tl-wrap {
+    display:flex; align-items:center; gap:0;
+    margin-top:18px;
+    opacity:0; transition:opacity 0.5s ease 0.8s;
+    flex-wrap:nowrap;
+  }
+  #s5.active .tl-wrap { opacity:1; }
+  .tl-node {
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+  }
+  .tl-dot {
+    width:10px; height:10px; border-radius:50%;
+    background:#ff6b35; box-shadow:0 0 8px rgba(255,107,53,0.5);
+  }
+  .tl-name { font-size:clamp(9px,1.5vw,11px); color:#d0d0d0; letter-spacing:1px; text-transform:uppercase; }
+  .tl-year { font-size:8px; color:#555; }
+  .tl-line {
+    flex:1; height:1px; background:rgba(255,107,53,0.3);
+    min-width:12px;
+    position:relative; top:-8px;
+  }
+  .destroyed {
+    margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; justify-content:center;
+    opacity:0; transition:opacity 0.5s ease 1.2s;
+  }
+  #s5.active .destroyed { opacity:1; }
+  .d-tag {
+    font-size:9px; padding:3px 9px;
+    border-radius:3px; letter-spacing:1px; text-transform:uppercase;
+  }
+  .d-tag.gone { background:rgba(220,50,50,0.1); border:1px solid rgba(220,50,50,0.25); color:#dc5050; }
+  .d-tag.born { background:rgba(50,200,100,0.1); border:1px solid rgba(50,200,100,0.25); color:#50c878; }
+
+  /* ── S6 Pregunta ── */
+  #s6 { background:#0a080a; }
+  .scale-wrap {
+    display:flex; gap:14px; margin-top:16px; width:min(360px,85%);
+    opacity:0; transition:opacity 0.5s ease 0.8s;
+  }
+  #s6.active .scale-wrap { opacity:1; }
+  .scale-side {
+    flex:1; border-radius:6px; padding:12px 10px; text-align:center;
+  }
+  .scale-side.neg { background:rgba(220,50,50,0.07); border:1px solid rgba(220,50,50,0.25); }
+  .scale-side.pos { background:rgba(50,200,100,0.07); border:1px solid rgba(50,200,100,0.25); }
+  .scale-icon { font-size:22px; margin-bottom:6px; display:block; }
+  .scale-head { font-size:9px; letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
+  .scale-side.neg .scale-head { color:#dc5050; }
+  .scale-side.pos .scale-head { color:#50c878; }
+  .scale-items { font-size:10px; color:#888; line-height:1.9; }
+  .speed-bar-wrap { margin-top:14px; width:min(360px,85%); opacity:0; transition:opacity 0.5s ease 1.3s; }
+  #s6.active .speed-bar-wrap { opacity:1; }
+  .speed-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .speed-label { font-size:9px; letter-spacing:1px; color:#666; text-transform:uppercase; width:70px; text-align:right; flex-shrink:0; }
+  .speed-track { flex:1; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
+  .speed-fill { height:100%; border-radius:2px; width:0; }
+  .speed-fill.d { background:#dc5050; transition:width 1s ease 1.5s; }
+  .speed-fill.c { background:#50c878; transition:width 1s ease 1.7s; }
+  #s6.active .speed-fill.d { width:90%; }
+  #s6.active .speed-fill.c { width:38%; }
+
+  /* ── S7 Tesis ── */
+  #s7 { background:#080808; }
+  .code-bg {
+    position:absolute; left:0; top:0; width:100%; height:100%;
+    font-family:monospace; font-size:10px; color:rgba(255,107,53,0.05);
+    line-height:1.6; padding:10px; overflow:hidden; pointer-events:none;
+    white-space:pre;
+  }
+  .tesis-box {
+    border:1px solid rgba(255,107,53,0.4);
+    background:rgba(255,107,53,0.06);
+    padding:16px 22px; border-radius:8px;
+    max-width:74%; margin-top:14px;
+    opacity:0; transition:all 0.6s ease 0.9s;
+    position:relative;
+  }
+  #s7.active .tesis-box { opacity:1; }
+  .tesis-text { font-size:clamp(12px,2vw,15px); color:#f5f0e8; line-height:1.8; font-weight:300; }
+  .tesis-text strong { color:#ff6b35; font-weight:600; }
+  .vs-pill {
+    display:inline-flex; gap:10px; margin-top:12px;
+    opacity:0; transition:opacity 0.5s ease 1.4s;
+  }
+  #s7.active .vs-pill { opacity:1; }
+  .pill {
+    font-size:9px; letter-spacing:2px; text-transform:uppercase;
+    padding:4px 12px; border-radius:20px;
+  }
+  .pill.bad { background:rgba(220,50,50,0.12); border:1px solid rgba(220,50,50,0.3); color:#dc5050; }
+  .pill.good { background:rgba(50,200,100,0.12); border:1px solid rgba(50,200,100,0.3); color:#50c878; }
+
+  /* ── S8 Cierre ── */
+  #s8 { background:#0a0a0a; }
+  .cierre-lines {
+    position:absolute; inset:0; pointer-events:none;
+    overflow:hidden;
+  }
+  .cl { position:absolute; width:1px; background:rgba(255,107,53,0.08); }
+  .cierre-text {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(22px,4.8vw,42px); color:#f5f0e8;
+    text-align:center; line-height:1.25; max-width:80%;
+    opacity:0; transform:translateY(18px);
+    transition:all 0.7s ease 0.4s;
+  }
+  #s8.active .cierre-text { opacity:1; transform:translateY(0); }
+  .cierre-accent { color:#ff6b35; }
+  .cierre-q {
+    font-size:clamp(11px,2vw,14px); color:#555;
+    margin-top:16px; font-style:italic; text-align:center;
+    max-width:65%; line-height:1.7;
+    opacity:0; transition:opacity 0.6s ease 1.2s;
+  }
+  #s8.active .cierre-q { opacity:1; }
+  .cta-row {
+    display:flex; gap:10px; margin-top:18px;
+    opacity:0; transition:opacity 0.5s ease 1.6s;
+  }
+  #s8.active .cta-row { opacity:1; }
+  .cta-btn {
+    font-size:9px; letter-spacing:3px; text-transform:uppercase;
+    padding:7px 18px; border-radius:3px; border:1px solid;
+  }
+  .cta-btn.outline { border-color:rgba(255,255,255,0.15); color:#888; background:transparent; }
+  .cta-btn.filled { border-color:#ff6b35; color:#ff6b35; background:rgba(255,107,53,0.08); }
+
+  /* Controls */
+  #controls {
+    display:flex; align-items:center; gap:8px; padding:7px 0 0;
+  }
+  #controls button {
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.1);
+    color:#f5f0e8; padding:5px 13px; border-radius:4px;
+    cursor:pointer; font-size:11px;
+    font-family:'IBM Plex Sans',sans-serif; letter-spacing:1px;
+    transition:background 0.2s;
+  }
+  #controls button:hover { background:rgba(255,107,53,0.15); border-color:rgba(255,107,53,0.4); }
+  #scene-dots { display:flex; gap:5px; margin-left:auto; align-items:center; }
+  .dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.18); cursor:pointer; transition:all 0.3s; }
+  .dot.on { background:#ff6b35; transform:scale(1.35); }
+  #scene-meta { font-size:10px; color:#666; font-family:'IBM Plex Sans',sans-serif; letter-spacing:1px; flex:1; text-align:center; }
+
+  #progress-bar { position:absolute; bottom:0; left:0; height:2px; background:#ff6b35; z-index:10; transition:width 0.08s linear; }
+</style>
+
+<div id="player">
+  <canvas id="bg-canvas"></canvas>
+  <div id="progress-bar" style="width:0%"></div>
+
+  <!-- S1: Hook -->
+  <div class="scene active" id="s1">
+    <div class="hook-grid"></div>
+    <div class="label">Hook Visual</div>
+    <div class="title">¿La IA va a quitarnos el trabajo?</div>
+    <div class="hook-q">"¿Cuántos usaron IA esta semana para hacer algo que antes le pagarían a alguien más?"</div>
+    <div class="hook-icons">
+      <div class="hicon">💻</div>
+      <div class="hicon">🤖</div>
+      <div class="hicon">💼</div>
+      <div class="hicon">📱</div>
+    </div>
+  </div>
+
+  <!-- S2: Revolución Industrial -->
+  <div class="scene" id="s2">
+    <div class="label">Contexto Histórico</div>
+    <div class="title">Revolución Industrial —<br>fábricas y máquinas</div>
+    <div class="factory-row">
+      <div class="factory-bld">
+        <div class="smoke"></div><div class="smoke"></div>
+        <div class="factory-rect" style="width:22px;height:40px"></div>
+        <div class="factory-rect" style="width:44px;height:30px"></div>
+        <div class="factory-label">1760</div>
+      </div>
+      <div class="factory-bld">
+        <div class="smoke"></div><div class="smoke"></div><div class="smoke"></div>
+        <div class="factory-rect" style="width:18px;height:55px"></div>
+        <div class="factory-rect" style="width:18px;height:30px"></div>
+        <div class="factory-rect" style="width:58px;height:24px"></div>
+        <div class="factory-label">1820</div>
+      </div>
+      <div class="factory-bld">
+        <div class="smoke"></div><div class="smoke"></div>
+        <div class="factory-rect" style="width:20px;height:48px"></div>
+        <div class="factory-rect" style="width:20px;height:30px"></div>
+        <div class="factory-rect" style="width:50px;height:28px"></div>
+        <div class="factory-label">1880</div>
+      </div>
+    </div>
+    <div class="quote">"No es la primera vez. La Revolución Industrial automatizó fábricas enteras…"</div>
+  </div>
+
+  <!-- S3: El cambio actual -->
+  <div class="scene" id="s3">
+    <div class="label">El Cambio Actual</div>
+    <div class="title">IA haciendo trabajo cognitivo</div>
+    <div class="brain-grid">
+      <div class="brain-cell"><span class="bc-icon">📞</span><span class="bc-label">Call center</span></div>
+      <div class="brain-cell"><span class="bc-icon">🎨</span><span class="bc-label">Diseño</span></div>
+      <div class="brain-cell"><span class="bc-icon">💻</span><span class="bc-label">Código</span></div>
+      <div class="brain-cell"><span class="bc-icon">🧮</span><span class="bc-label">Contaduría</span></div>
+      <div class="brain-cell"><span class="bc-icon">📝</span><span class="bc-label">Redacción</span></div>
+      <div class="brain-cell"><span class="bc-icon">🌐</span><span class="bc-label">Traducción</span></div>
+    </div>
+    <div class="ai-bar"><div class="ai-fill"></div></div>
+    <div class="quote">"No solo automatiza brazos — automatiza cerebros."</div>
+  </div>
+
+  <!-- S4: 300M -->
+  <div class="scene" id="s4">
+    <div class="label">Dato Impactante</div>
+    <div class="ring-wrap">
+      <svg class="ring-svg" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="68" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="12"/>
+        <circle cx="80" cy="80" r="68" fill="none" stroke="#ff6b35" stroke-width="12"
+          stroke-dasharray="427" stroke-dashoffset="427"
+          stroke-linecap="round" transform="rotate(-90 80 80)"
+          style="transition:stroke-dashoffset 1.5s ease 0.6s" id="ring-arc"/>
+        <circle cx="80" cy="80" r="52" fill="none" stroke="rgba(255,107,53,0.1)" stroke-width="1"/>
+      </svg>
+      <div class="ring-center">
+        <div class="big-number">300M</div>
+        <div class="big-sub">empleos en riesgo</div>
+      </div>
+    </div>
+    <div class="mckinsey-tag">Fuente: McKinsey Global Institute · 2030</div>
+  </div>
+
+  <!-- S5: Contrapunto -->
+  <div class="scene" id="s5">
+    <div class="label">Destrucción Creativa</div>
+    <div class="title">Siempre pasó lo mismo</div>
+    <div class="tl-wrap">
+      <div class="tl-node"><div class="tl-dot"></div><div class="tl-name">Imprenta</div><div class="tl-year">1440</div></div>
+      <div class="tl-line"></div>
+      <div class="tl-node"><div class="tl-dot"></div><div class="tl-name">Periódicos</div><div class="tl-year">1800s</div></div>
+      <div class="tl-line"></div>
+      <div class="tl-node"><div class="tl-dot"></div><div class="tl-name">Internet</div><div class="tl-year">1990s</div></div>
+      <div class="tl-line"></div>
+      <div class="tl-node"><div class="tl-dot"></div><div class="tl-name">Netflix</div><div class="tl-year">2007</div></div>
+      <div class="tl-line"></div>
+      <div class="tl-node"><div class="tl-dot" style="background:#7ab0ff;box-shadow:0 0 8px rgba(122,176,255,0.5)"></div><div class="tl-name">IA</div><div class="tl-year">Hoy</div></div>
+    </div>
+    <div class="destroyed">
+      <span class="d-tag gone">❌ Copistas</span>
+      <span class="d-tag gone">❌ Videoclub</span>
+      <span class="d-tag born">✅ Creadores</span>
+      <span class="d-tag born">✅ Devs</span>
+      <span class="d-tag born">✅ Streamers</span>
+    </div>
+    <div class="quote">"Cada vez que destruyó empleos, también creó otros."</div>
+  </div>
+
+  <!-- S6: Pregunta real -->
+  <div class="scene" id="s6">
+    <div class="label">La Pregunta Real</div>
+    <div class="title">No si, sino ¿a qué velocidad?</div>
+    <div class="scale-wrap">
+      <div class="scale-side neg">
+        <span class="scale-icon">⚡</span>
+        <div class="scale-head">Destruye empleos</div>
+        <div class="scale-items">Rápido<br>Sin aviso<br>Masivo</div>
+      </div>
+      <div class="scale-side pos">
+        <span class="scale-icon">🌱</span>
+        <div class="scale-head">Crea empleos</div>
+        <div class="scale-items">Lento<br>Requiere adaptación<br>Selectivo</div>
+      </div>
+    </div>
+    <div class="speed-bar-wrap">
+      <div class="speed-row">
+        <span class="speed-label">Destruye</span>
+        <div class="speed-track"><div class="speed-fill d"></div></div>
+      </div>
+      <div class="speed-row">
+        <span class="speed-label">Crea</span>
+        <div class="speed-track"><div class="speed-fill c"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S7: Tesis -->
+  <div class="scene" id="s7">
+    <div class="code-bg" id="code-bg"></div>
+    <div class="label">Tesis Personal</div>
+    <div class="title">Estudiante de sistemas</div>
+    <div class="tesis-box">
+      <div class="tesis-text">
+        "La IA no reemplazará a quienes saben usarla —<br>
+        <strong>reemplazará a quienes no aprendan.</strong>"
+      </div>
+    </div>
+    <div class="vs-pill">
+      <span class="pill bad">No aprende → reemplazado</span>
+      <span class="pill good">Aprende → potenciado</span>
+    </div>
+  </div>
+
+  <!-- S8: Cierre -->
+  <div class="scene" id="s8">
+    <div class="cierre-lines" id="cierre-lines"></div>
+    <div class="cierre-text">
+      ¿La IA nos va a quitar el trabajo?<br>
+      <span class="cierre-accent">A algunos, sí.</span><br>
+      Pero también creará nuevos.
+    </div>
+    <div class="cierre-q">La diferencia está en quién se adapte primero.<br>¿Ya estás aprendiendo?</div>
+    <div class="cta-row">
+      <span class="cta-btn outline">Sígueme</span>
+      <span class="cta-btn filled">¿Estás listo?</span>
+    </div>
+  </div>
+</div>
+
+<div id="controls">
+  <button id="btn-prev">◀ PREV</button>
+  <button id="btn-play">▶ PLAY</button>
+  <button id="btn-next">NEXT ▶</button>
+  <span id="scene-meta">Escena 1 / 8</span>
+  <div id="scene-dots"></div>
+</div>
+
+<script>
+const scenes=[
+  {id:'s1',label:'Hook Visual',dur:30},
+  {id:'s2',label:'Contexto Histórico',dur:20},
+  {id:'s3',label:'El Cambio Actual',dur:25},
+  {id:'s4',label:'Dato McKinsey',dur:15},
+  {id:'s5',label:'Contrapunto',dur:30},
+  {id:'s6',label:'La Pregunta Real',dur:20},
+  {id:'s7',label:'Tesis Personal',dur:25},
+  {id:'s8',label:'Cierre',dur:15}
+];
+
+let current=0, playing=false, elapsed=0, interval=null;
+const totalDur=scenes.reduce((a,s)=>a+s.dur,0);
+
+const dotsEl=document.getElementById('scene-dots');
+const metaEl=document.getElementById('scene-meta');
+const progressEl=document.getElementById('progress-bar');
+const playBtn=document.getElementById('btn-play');
+
+scenes.forEach((_,i)=>{
+  const d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.onclick=()=>goTo(i);
+  dotsEl.appendChild(d);
+});
+
+function totalOffset(idx){ let t=0; for(let i=0;i<idx;i++) t+=scenes[i].dur; return t; }
+
+function goTo(idx){
+  document.getElementById(scenes[current].id).classList.remove('active');
+  current=Math.max(0,Math.min(idx,scenes.length-1));
+  document.getElementById(scenes[current].id).classList.add('active');
+  elapsed=totalOffset(current);
+  onSceneActivate(current);
+  update();
+}
+
+function onSceneActivate(idx){
+  if(idx===3){
+    setTimeout(()=>{
+      const arc=document.getElementById('ring-arc');
+      if(arc) arc.style.strokeDashoffset='0';
+    },300);
+  }
+  if(idx===6){
+    const cb=document.getElementById('code-bg');
+    if(cb){
+      const lines=['const model = new AI();','if(!human.learns()){','  model.replace(human);','}','// Adapt or be replaced','function adapt(skills){','  return skills.map(s=>','    s.upgrade(AI));','}','let future = adapt(you);'];
+      cb.textContent=lines.join('\n').repeat(4);
+    }
+  }
+  if(idx===7){
+    const cl=document.getElementById('cierre-lines');
+    if(cl){ cl.innerHTML='';
+      for(let i=0;i<12;i++){
+        const l=document.createElement('div');
+        l.className='cl';
+        l.style.cssText=`left:${Math.random()*100}%;top:0;height:${30+Math.random()*70}%;opacity:${0.05+Math.random()*0.06}`;
+        cl.appendChild(l);
+      }
+    }
+  }
+}
+
+function update(){
+  dotsEl.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('on',i===current));
+  metaEl.textContent='Escena '+(current+1)+' / '+scenes.length+' — '+scenes[current].label;
+  progressEl.style.width=(elapsed/totalDur*100)+'%';
+}
+
+function tick(){
+  elapsed++;
+  const sceneEnd=totalOffset(current)+scenes[current].dur;
+  if(elapsed>=sceneEnd){
+    if(current<scenes.length-1){ goTo(current+1); }
+    else { stop(); elapsed=totalDur; update(); }
+  } else { update(); }
+}
+
+function play(){ playing=true; playBtn.textContent='⏸ PAUSE'; interval=setInterval(tick,1000); }
+function stop(){ playing=false; playBtn.textContent='▶ PLAY'; clearInterval(interval); }
+
+playBtn.onclick=()=>playing?stop():play();
+document.getElementById('btn-next').onclick=()=>{ if(current<scenes.length-1) goTo(current+1); };
+document.getElementById('btn-prev').onclick=()=>{ if(current>0) goTo(current-1); };
+document.getElementById('player').onclick=(e)=>{ if(e.target.closest('#controls')) return; playing?stop():play(); };
+
+/* Floating particles */
+const canvas=document.getElementById('bg-canvas');
+const ctx=canvas.getContext('2d');
+const pts=Array.from({length:28},()=>({
+  x:Math.random(),y:Math.random(),
+  vx:(Math.random()-0.5)*0.0003,vy:(Math.random()-0.5)*0.0003,
+  r:Math.random()*1.5+0.5, a:Math.random()*0.18+0.04
+}));
+
+function drawParticles(){
+  const W=canvas.offsetWidth, H=canvas.offsetHeight;
+  if(canvas.width!==W||canvas.height!==H){ canvas.width=W; canvas.height=H; }
+  ctx.clearRect(0,0,W,H);
+  pts.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0)p.x=1; if(p.x>1)p.x=0;
+    if(p.y<0)p.y=1; if(p.y>1)p.y=0;
+    ctx.beginPath();
+    ctx.arc(p.x*W,p.y*H,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,107,53,${p.a})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+onSceneActivate(0);
+update();
+</script>
